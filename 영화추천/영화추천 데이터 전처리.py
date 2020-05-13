@@ -47,7 +47,6 @@ data = pd.merge(data,users,on='userId')
 print(data)
 #최신영화순으로 출력하기
 
-data.pivot_table(index = 'title', aggfunc = 'mean', values = 'rate').sort_values(by = 'rate', ascending = False)
 
 #평점 가장 높은 영화 5개 출력하기
 
