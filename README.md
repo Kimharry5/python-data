@@ -1,4 +1,4 @@
-# job_camp/test
+# Comento _ Camp
 
 - 혜리님 Django 연동해드립니다!
 - pip install django
