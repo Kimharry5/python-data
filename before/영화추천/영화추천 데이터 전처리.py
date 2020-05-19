@@ -1,20 +1,14 @@
 #직무부트캠프 2주차 과제 - 영화 데이터 전처리
 import pandas as pd
 from pandas import DataFrame as df
-from pandas import Series 
+from pandas import Series
+import numpy as np 
+
 
 movie_file=open('E:\\코멘토\\2주차\\영화데이터\\movies.dat', encoding='UTF8')
 user_file = open('E:\\코멘토\\2주차\\영화데이터\\users.dat', encoding='UTF8')
 rating_file = open('E:\\코멘토\\2주차\\영화데이터\\ratings.dat', encoding='UTF8')
 
-'''
-for line in movie_test_file :
-    movieID_list.append(int(line.split('::')[0]))
-    title_list.append(line.split('::')[1])
-    genre_list.append(line.split('::')[2])
-   
-print('movieID_list=',movieID_list,'\ntitle_list=',title_list,'\ngenre_list=',genre_list)
-'''
 
 #user에 관한 데이터
 users = pd.read_csv('E:\\코멘토\\2주차\\영화데이터\\users.dat', sep = '::', engine = 'python',
@@ -34,94 +28,79 @@ ratings = pd.read_csv('E:\\코멘토\\2주차\\영화데이터\\ratings.dat', se
 #3개의 데이터 합치기
 data = pd.merge(movies,ratings,on='movieId')
 data = pd.merge(data,users,on='userId')
+# ----------------------------------------
 
-#rate값 문자-> 숫자로 변형
-#data.astype({'rate':int})
-#print(data.dtypes)
-
-#최신영화순으로 출력하기
-#movies, title(제목(년도)) 나누기
-#print(movies.title)
-
-movies_data = {"movies" : []} 
-
-for s in movie_file.readlines() : #영화 갯수만큼
-    [id, title, genre] = s.split('::')
-          #제목안에 괄호가 있는 경우....
-    title = title[:len(title)-6]                                #영화데이터 추가할시 변경해야함
-    movies_data['movies'].append({
-        'mId' : id,
-        'title' : title,
-        'genre' : genre
-    })
-
-#print(movies_data)
-
-
-#평점 가장 높은 영화 5개 출력하기
-#unexpected indent -> 들여쓰기 에러
-#mrdata = pd.merge(movies,ratings,on='movieId')
-#movie_mean = mrdata.groupby('title')['rate'].mean().iloc[:5]
-#새로운 열에 mean_rate를 추가해서 데이터,,넣어야 DB에 들어갈수있나?
-#print(movie_mean)
-
-#                                                title
-#                                                $1,000,000 Duck (1971)           3.027027
-#                                                'Night Mother (1986)             3.371429
-#                                                'Til There Was You (1997)        2.692308
-#                                                'burbs, The (1989)               2.910891
-#                                                ...And Justice for All (1979)    3.713568
-#                                                Name: rate, dtype: float64
-
-#grp = data.groupby('title') 
-  
-#print ( grp.agg({'rate' : 'mean'}).iloc[:5] )
-#print( type(grp), type(movie_mean))             #<class 'pandas.core.groupby.generic.DataFrameGroupBy'> <class 'pandas.core.series.Series'>
-                                                #                                   rate
-                                                #title
-                                                #$1,000,000 Duck (1971)         3.027027
-                                                #'Night Mother (1986)           3.371429
-                                                #'Til There Was You (1997)      2.692308
-                                                #'burbs, The (1989)             2.910891
-                                                #...And Justice for All (1979)  3.713568
-
-best5_movies = data.groupby('title') #영화별로 묶기
-data = data.astype({'rate':'int'})
-best5_movies = best5_movies['rate'].agg('mean').iloc[:5] #영화별 평점 평균값 구하기
-data = pd.merge(data,best5_movies,on='title')
-#print(best5_movies)
-
-#높은 평점 순 영화 목록
-high_rate = pd.merge(movies,ratings,on='movieId')
-#영화별 평점 평균에서 내림차순으로 정렬함
+#--------------------------------------영화별 평점 정렬, 높은것 5개
 pd.options.display.float_format = '{:.1f}'.format
-high_rate = high_rate.groupby('title')
-
-high_rate = high_rate['rate'].agg('mean')
-print(high_rate)
-#high_rate = high_rate['rate'].agg('mean').sort_values(ascending=False)
-#print(high_rate)
-
-best_moives = (pd.pivot_table(data=ratings, index='movieId', values='rate', aggfunc='mean')
-            .sort_values(by='rate', ascending=False)
+best_moives = (pd.pivot_table(data=data, index='title', values='rate', aggfunc='mean')
             .rename(columns={'rate' : 'mean_rate'})
-               #.head(5)
             )
+data2 = pd.merge(data,best_moives, on = 'title')
+data3 = data2.drop_duplicates('title')
+df_sort_rate = data3[ ['title','mean_rate'] ].sort_values(by='mean_rate', ascending=False).reset_index(drop=True)  #영화 평점순 
+df_sort_rate5 = df_sort_rate[:5]# 평점 best5 영화
+print('<영화 평점 높은순> \n',df_sort_rate,'\n','<영화 평점 best5> \n',df_sort_rate5) 
 
-print(best_moives)
-"""
-영화별로묶은후 평점 다시 구하기
-        mean_rate
-movieId
-989            5.0
-3881           5.0
-1830           5.0
-3382           5.0
-787            5.0
-...            ...
-826            1.0
-3228           1.0
-2845           1.0
-3209           1.0
-142            1.0
-"""
+#----------출력결과--------------------------------------------------------------------
+#<영화 평점 높은순> 
+#                                    title  mean_rate
+#0     Gate of Heavenly Peace, The (1995)        5.0 
+#1                           Lured (1947)        5.0 
+#2                   Smashing Time (1967)        5.0 
+#3               One Little Indian (1973)        5.0 
+#4                 Song of Freedom (1936)        5.0 
+#...                                  ...        ... 
+#3701                  Get Over It (1996)        1.0 
+#3702                      Cheetah (1989)        1.0
+#3703                    Sleepover (1995)        1.0
+#3704                Venice/Venice (1992)        1.0
+#3705                   White Boys (1999)        1.0
+#[3706 rows x 2 columns]
+ 
+#<영화 평점 best5>
+#                                 title  mean_rate
+#0  Gate of Heavenly Peace, The (1995)        5.0
+#1                        Lured (1947)        5.0
+#2                Smashing Time (1967)        5.0
+#3            One Little Indian (1973)        5.0
+#4              Song of Freedom (1936)        5.0
+#--------------------------------------------------------------------
+
+
+
+#------------------------각 연령대 영화 추천 5개 (평점 높은순)-------------------------
+age_rate = data.pivot_table ( index = 'title', columns = 'age'  , aggfunc = 'mean'
+                            ,values ='rate'
+                            ,fill_value= 0
+                             )
+print(age_rate)
+
+age_rate1 = age_rate.sort_values(by = 1 , ascending = False)[1].iloc[:5]
+
+age_rate2 = age_rate.sort_values(by = 18 , ascending = False)[18].iloc[:5]
+
+age_rate3 = age_rate.sort_values(by = 25 , ascending = False)[25].iloc[:5]
+
+age_rate4 = age_rate.sort_values(by = 35 , ascending = False)[35].iloc[:5]
+
+age_rate5 = age_rate.sort_values(by = 45 , ascending = False)[45].iloc[:5]
+
+age_rate6 = age_rate.sort_values(by = 50 , ascending = False)[50].iloc[:5]
+
+age_rate7 = age_rate.sort_values(by = 56 , ascending = False)[56].iloc[:5]
+
+print(age_rate1 , '\n' ,age_rate2, '\n' ,age_rate3, '\n' ,age_rate4, '\n' ,age_rate5, '\n' ,age_rate6, '\n' ,age_rate7) 
+
+#----------출력결과--------------------------------------------------------------------
+#title
+#Faces (1968)                                        5.0
+#Man and a Woman, A (Un Homme et une Femme) (1966)   5.0
+#Phantasm II (1988)                                  5.0
+#Somewhere in Time (1980)                            5.0
+#Phantasm III: Lord of the Dead (1994)               5.0
+#Name: 1, dtype: float64 
+
+#18세 미만 영화 추천
+#--------------------------------------------------------------------
+
+
