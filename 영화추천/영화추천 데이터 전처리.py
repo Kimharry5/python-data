@@ -3,7 +3,8 @@ import pandas as pd
 from pandas import DataFrame as df
 from pandas import Series
 import numpy as np 
-
+import matplotlib.pyplot as plt
+#%matplotlib inline
 
 movie_file=open('E:\\코멘토\\2주차\\영화데이터\\movies.dat', encoding='UTF8')
 user_file = open('E:\\코멘토\\2주차\\영화데이터\\users.dat', encoding='UTF8')
@@ -124,3 +125,9 @@ print(movies)
 #3880     3950                    Tigerland                          Drama    2000
 #3881     3951             Two Family House                          Drama    2000
 #3882     3952               Contender, The                 Drama|Thriller    2000
+
+#최신 개봉순
+movies_rsort = movies.sort_values(by = 'release' , ascending = False)
+#최신 개봉순 5개
+movies_rsort5 = movies.sort_values(by = 'release' , ascending = False).iloc[:5] 
+print(movies_rsort, movies_rsort5)
